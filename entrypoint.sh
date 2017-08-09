@@ -2,10 +2,8 @@
 
 CMD="airflow"
 TRY_LOOP="10"
-POSTGRES_HOST="postgres"
-POSTGRES_PORT="5432"
-RABBITMQ_HOST="rabbitmq"
-RABBITMQ_CREDS="airflow:airflow"
+MYSQL_HOST="mysql"
+MYSQL_PORT="3306"
 FERNET_KEY=$(python -c "from cryptography.fernet import Fernet; FERNET_KEY = Fernet.generate_key().decode(); print FERNET_KEY")
 
 # Generate Fernet key
@@ -28,13 +26,13 @@ fi
 # wait for DB
 if [ "$1" = "webserver" ] || [ "$1" = "worker" ] || [ "$1" = "scheduler" ] ; then
   i=0
-  while ! nc $POSTGRES_HOST $POSTGRES_PORT >/dev/null 2>&1 < /dev/null; do
+  while ! nc $MYSQL_HOST $MYSQL_PORT >/dev/null 2>&1 < /dev/null; do
     i=`expr $i + 1`
     if [ $i -ge $TRY_LOOP ]; then
-      echo "$(date) - ${POSTGRES_HOST}:${POSTGRES_PORT} still not reachable, giving up"
+      echo "$(date) - ${MYSQL_HOST}:${MYSQL_PORT} still not reachable, giving up"
       exit 1
     fi
-    echo "$(date) - waiting for ${POSTGRES_HOST}:${POSTGRES_PORT}... $i/$TRY_LOOP"
+    echo "$(date) - waiting for ${MYSQL_HOST}:${MYSQL_PORT}... $i/$TRY_LOOP"
     sleep 5
   done
   if [ "$1" = "webserver" ]; then

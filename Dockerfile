@@ -1,27 +1,17 @@
-# VERSION 1.8.0.0
-# AUTHOR: Yusuke KUOKA
-# DESCRIPTION: Docker image to run Airflow on Kubernetes which is capable of creating Kubernetes jobs
-# BUILD: docker build --rm -t mumoshu/kube-airflow
-# SOURCE: https://github.com/mumoshu/kube-airflow
-
 FROM debian:jessie
-MAINTAINER Yusuke KUOKA <ykuoka@gmail.com>
 
-# Never prompts the user for choices on installation/configuration of packages
-ENV DEBIAN_FRONTEND noninteractive
-ENV TERM linux
+ENV DEBIAN_FRONTEND=noninteractive \
+    TERM=linux \
+    AIRFLOW_HOME=/usr/local/airflow \
+    KUBECTL_VERSION=1.6.1 \
+#   AIRFLOW_VERSION=1.8.0.0 \
+    LANGUAGE=en_US.UTF-8 \
+    LANG=en_US.UTF-8 \
+    LC_ALL=en_US.UTF-8 \
+    LC_CTYPE=en_US.UTF-8 \
+    LC_MESSAGES=en_US.UTF-8 \
+    LC_ALL=en_US.UTF-8
 
-# Airflow
-ARG AIRFLOW_VERSION=%%AIRFLOW_VERSION%%
-ENV AIRFLOW_HOME /usr/local/airflow
-
-# Define en_US.
-ENV LANGUAGE en_US.UTF-8
-ENV LANG en_US.UTF-8
-ENV LC_ALL en_US.UTF-8
-ENV LC_CTYPE en_US.UTF-8
-ENV LC_MESSAGES en_US.UTF-8
-ENV LC_ALL  en_US.UTF-8
 
 RUN set -ex \
     && buildDeps=' \
@@ -58,8 +48,8 @@ RUN set -ex \
     && pip install pyOpenSSL \
     && pip install ndg-httpsclient \
     && pip install pyasn1 \
-    && pip install psycopg2 \
-    && pip install airflow[celery,postgresql,hive]==$AIRFLOW_VERSION \
+#   && pip install airflow[mysql]==$AIRFLOW_VERSION \
+    && pip install git@github.com:bloomberg/airflow.git@airflow-kubernetes-executor[mysql] \
     && apt-get remove --purge -yqq $buildDeps libpq-dev \
     && apt-get clean \
     && rm -rf \
@@ -70,17 +60,13 @@ RUN set -ex \
         /usr/share/doc \
         /usr/share/doc-base
 
-ENV KUBECTL_VERSION %%KUBECTL_VERSION%%
-
 RUN curl -L -o /usr/local/bin/kubectl https://storage.googleapis.com/kubernetes-release/release/v${KUBECTL_VERSION}/bin/linux/amd64/kubectl && chmod +x /usr/local/bin/kubectl
 
-COPY script/entrypoint.sh ${AIRFLOW_HOME}/entrypoint.sh
-COPY config/airflow.cfg ${AIRFLOW_HOME}/airflow.cfg
+COPY entrypoint.sh ${AIRFLOW_HOME}/entrypoint.sh
+COPY airflow.cfg ${AIRFLOW_HOME}/airflow.cfg
 
 RUN chown -R airflow: ${AIRFLOW_HOME} \
     && chmod +x ${AIRFLOW_HOME}/entrypoint.sh
-
-EXPOSE 8080 5555 8793
 
 USER airflow
 WORKDIR ${AIRFLOW_HOME}
