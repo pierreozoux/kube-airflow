@@ -15,6 +15,8 @@ ENV DEBIAN_FRONTEND=noninteractive \
 
 RUN set -ex \
     && buildDeps=' \
+        git \
+        ssh \
         python-pip \
         python-dev \
         libkrb5-dev \
@@ -49,7 +51,7 @@ RUN set -ex \
     && pip install ndg-httpsclient \
     && pip install pyasn1 \
 #   && pip install airflow[mysql]==$AIRFLOW_VERSION \
-    && pip install git@github.com:bloomberg/airflow.git@airflow-kubernetes-executor[mysql] \
+    && pip install -e git+https://github.com/bloomberg/airflow.git@airflow-kubernetes-executor#egg=apache-airflow[mysql] \
     && apt-get remove --purge -yqq $buildDeps libpq-dev \
     && apt-get clean \
     && rm -rf \
